@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  h1 {padding-left: 0%; font-family: 'Enriqueta', arial, serif; line-height: 1.25; margin: 0 0 10px; font-size: 10px; font-weight: bold; }
+
+h2 {padding-left: 45%; font-family: 'Enriqueta', arial, serif; line-height: 1.25; margin: 0 0 10px; font-size: 40px; font-weight: bold; }
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+</style>
+</head>
+<body>
+<h1>Rent.ie</h1>
+
+<a href="/" style="padding-left:95%;line-height: 1.25; margin: 0 0 10px; font-size: 15px; font-weight: bold;">Log out</a>
+<h2>Find Apartment</h2><br>
+<div style="padding-left:40%;line-height: 1.25; margin: 0 0 10px; font-size: 15px; font-weight: bold; background-color: #dddddd;;">
+  
+Bedrooms:
+<select id = "bedroom">
+   
+</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Thermal isolation:
+<select  id = "thermal">
+   
+</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Area
+<select  id ="area">
+   
+</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<button onclick = "find()">Find </button>
+</div>
+<div id="table">
+</div>
+</body>
+<script>
+  user_id = localStorage.getItem("user_id");
+  function loadTable(){
+
+    var xmlhttp = new XMLHttpRequest();
+
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE) {  
+           if (xmlhttp.status == 200) {
+            document.getElementById("table").innerHTML =  createTable(JSON.parse(xmlhttp.responseText));
+           }
+           else if (xmlhttp.status == 400) {
+              alert('There was an error 400');
+           }
+           else {
+               alert('something else other than 200 was returned');
+           }
+        }
+    };
+
+    xmlhttp.open("GET", "/get-all", true);
+    xmlhttp.send();
+
+  }
+
+
+
+
+  function loadList(url,id){
+
+var xmlhttp = new XMLHttpRequest();
+
+xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == XMLHttpRequest.DONE) {  
+       if (xmlhttp.status == 200) {
+        document.getElementById(id).innerHTML =  createList(JSON.parse(xmlhttp.responseText));
+       }
+       else if (xmlhttp.status == 400) {
+          alert('There was an error 400');
+       }
+       else {
+           alert('something else other than 200 was returned');
+       }
+    }
+};
+
+xmlhttp.open("GET", url, true);
+xmlhttp.send();
+
+}
+function book(apar_id) {
+  apar_id =this.apar_id || apar_id;
+   var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE) {  
+           if (xmlhttp.status == 200) {
+
+            document.getElementById(apar_id).innerHTML =  'unbook';
+            document.getElementById(apar_id).onclick = unbook.bind({apar_id});
+           }
+           else if (xmlhttp.status == 400) {
+              alert('There was an error 400');
+           }
+           else {
+               alert('something else other than 200 was returned');
+           }
+        }
+    };
+
+    xmlhttp.open("GET", "/book?userid="+user_id+"&bookstatus=1&apar_id="+apar_id.split('_')[0], true);
+    xmlhttp.send();
+
+}
+function unbook(apar_id){
+  apar_id =  this.apar_id || apar_id;
+  var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE) {  
+           if (xmlhttp.status == 200) {
+
+            document.getElementById(apar_id).innerHTML =  'book';
+            document.getElementById(apar_id).onclick = book.bind({apar_id});
+           }
+           else if (xmlhttp.status == 400) {
+              alert('There was an error 400');
+           }
+           else {
+               alert('something else other than 200 was returned');
+           }
+        }
+    };
+
+    xmlhttp.open("GET", "/book?userid="+user_id+"&bookstatus=0&apar_id="+apar_id.split('_')[0], true);
+    xmlhttp.send();
+  
+}
+  function createTable(data){
+    if(data.length == 0){
+      return "No data found";
+    }
+   let tab ="<table><tr><th>Name</th><th>Images</th><th>Status</th><th>Area</th><th>Price</th></tr>";
+  //  [[1,"flat1","flat.jpg",null,2,345,1,null,"BOOKED"]
+    for(let i = 0;i<data.length;i++){
+      uniq = data[i][0]+"_apar";
+      tab+="<tr>";
+      tab+="<td>"+data[i][1]+"</td>";
+      tab+="<td><img src='/static/"+data[i][2]+"'></td>";
+      if(data[i][11] == "1" && data[i][9] == user_id && data[i][11] != "0"){
+        tab+="<td><button id='"+data[i][0]+"_apar' onclick='unbook(\""+uniq.toString()+"\")'>Unbook</button></td>";
+      } else  if(data[i][11] == "1" && data[i][9] != user_id){
+        tab+="<td>Booked</td>";
+      } else  if(data[i][11] != "1"){
+        tab+="<td><button id='"+data[i][0]+"_apar' onclick='book(\""+uniq.toString()+"\")'>Book</button></td>";
+      }
+      
+      tab+="<td>"+data[i][5]+"</td>";
+      tab+="<td>"+data[i][7]+"</td></tr>";
+    }
+    tab+="</table>";
+    return tab;
+
+  }
+  function createList(data) {
+    let opt ="<option>any</option>";
+    for(let i =0;i<data.length;i++){
+      opt+="<option>"+data[i]+"</option>";
+    }
+    console.log(opt);
+    return opt;
+
+  }
+function find(){
+  bedr = document.getElementById('bedroom');
+  thermal = document.getElementById('thermal');
+  area = document.getElementById('area');
+  bedr = bedr.options[bedr.selectedIndex].value;
+  thermal = thermal.options[thermal.selectedIndex].value;
+  area = area.options[area.selectedIndex].value;
+  var xmlhttp = new XMLHttpRequest();
+
+xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == XMLHttpRequest.DONE) {  
+       if (xmlhttp.status == 200) {
+        document.getElementById("table").innerHTML =  createTable(JSON.parse(xmlhttp.responseText));
+       }
+       else if (xmlhttp.status == 400) {
+          alert('There was an error 400');
+       }
+       else {
+           alert('something else other than 200 was returned');
+       }
+    }
+};
+
+xmlhttp.open("GET", "/filter?bedroom="+bedr+"&thermal="+thermal+"&area="+area, true);
+xmlhttp.send();
+
+}
+  loadTable();
+
+
+  loadList("/get-thermal-unique","thermal");
+  loadList("/get-bedroom-unique","bedroom");
+  loadList("/get-area-unique","area");
+  
+</script>
+</html>

@@ -1,0 +1,179 @@
+<html>
+    <style>
+     h1 {padding-left: -5%; font-family: 'Enriqueta', arial, serif; line-height: 1.25; margin: 0 0 10px; font-size: 10px; font-weight: bold; }
+
+h2 {padding-left: 0%; font-family: 'Enriqueta', arial, serif; line-height: 1.25; margin: 0 0 10px; font-size: 40px; font-weight: bold; }
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+<a href="/" style="padding-left:95%;line-height: 1.25; margin: 0 0 10px; font-size: 15px; font-weight: bold;">Log out</a>
+  <div style="padding-left: 40%;padding-top: 1%;"><h2>Sumary Reports:  </h2><br>&nbsp;&nbsp;<select onchange="find()" id= "current">
+        <option>Currently booked apartments</option>
+        <option>Get Most Frequently Booked apartment</option>
+        <option>Apartment order by price</option>
+    </select></div>
+
+    <div id="table">
+    </div>
+    <script>
+  user_id = localStorage.getItem("user_id");
+function loadList(url,id){
+
+var xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == XMLHttpRequest.DONE) {  
+       if (xmlhttp.status == 200) {
+        document.getElementById(id).innerHTML =  createList(JSON.parse(xmlhttp.responseText));
+       }
+       else if (xmlhttp.status == 400) {
+          alert('There was an error 400');
+       }
+       else {
+           alert('something else other than 200 was returned');
+       }
+    }
+};
+xmlhttp.open("GET", url, true);
+xmlhttp.send();
+}
+
+function createTableExpensive(data){
+    if(data.length == 0){
+      return "No data found";
+    }
+   let tab ="<table><tr><th>Name</th><th>Images</th><th>Frequency</th><th>Price</th></tr>";
+    for(let i = 0;i<data.length;i++){
+     
+      tab+="<tr>";
+      tab+="<td>"+data[i][0]+"</td>";
+      tab+="<td><img src='/static/"+data[i][1]+"'><img src='/static/"+data[i][2]+"'></td>";
+      tab+="<td>"+data[i][3]+"</td>";
+      tab+="<td>"+data[i][4]+"</td></tr>";
+    }
+    tab+="</table>";
+    return tab;
+
+  }
+function createTableFrequent(data){
+    if(data.length == 0){
+      return "No data found";
+    }
+   let tab ="<table><tr><th>Name</th><th>Images</th><th>Frequency</th><th>Price</th></tr>";
+    for(let i = 0;i<data.length;i++){
+     
+      tab+="<tr>";
+      tab+="<td>"+data[i][0]+"</td>";
+      tab+="<td><img src='/static/"+data[i][1]+"'><img src='/static/"+data[i][2]+"'></td>";
+      tab+="<td>"+data[i][3]+"</td>";
+      tab+="<td>"+data[i][4]+"</td></tr>";
+    }
+    tab+="</table>";
+    return tab;
+
+  }
+
+  function moneySpentonEachFlat() {
+    if(data.length == 0){
+      return "No data found";
+    }
+   let tab ="<table><tr><th>Name</th><th>Images</th><th>Frequency</th><th>Price</th></tr>";
+    for(let i = 0;i<data.length;i++){
+     
+      tab+="<tr>";
+      tab+="<td>"+data[i][0]+"</td>";
+      tab+="<td><img src='/static/"+data[i][1]+"'><img src='/static/"+data[i][2]+"'></td>";
+      tab+="<td>"+data[i][3]+"</td>";
+      tab+="<td>"+data[i][4]+"</td></tr>";
+    }
+    tab+="</table>";
+    return tab;
+
+  }
+  function flatfreq(data) {
+    if(data.length == 0){
+      return "No data found";
+    }
+   let tab ="<table><tr><th>Name</th><th>Images</th><th>Status</th><th>Details</th><th>Price</th></tr>";
+  //  [[1,"flat1","flat.jpg",null,2,345,1,null,"BOOKED"]
+    for(let i = 0;i<data.length;i++){
+      uniq = data[i][0]+"_apar";
+      tab+="<tr>";
+      tab+="<td>"+data[i][1]+"</td>";
+      tab+="<td><img src='/static/"+data[i][2]+"'><img src='/static/"+data[i][3]+"'></td>";
+      if(data[i][11] == "1" && data[i][9] == user_id){
+        tab+="<td><button id='"+data[i][0]+"_apar' onclick='unbook(\""+uniq.toString()+"\")'>Unbook</button></td>";
+      } else  if(data[i][11] == "1" && data[i][9] != user_id){
+        tab+="<td>Booked</td>";
+      } else  if(data[i][11] != "1"){
+        tab+="<td><button id='"+data[i][0]+"_apar' onclick='book(\""+uniq.toString()+"\")'>Book</button></td>";
+      }
+      
+      tab+="<td>"+data[i][8]+"</td>";
+      tab+="<td>"+data[i][7]+"</td></tr>";
+    }
+    tab+="</table>";
+    return tab;
+
+  }
+  function find(){
+    bedr = document.getElementById('current').selectedIndex;
+    let url = "";
+    if(bedr == 0){
+        url = '/get-current-apart'
+    }
+    if(bedr == 1){
+        url = '/get-frequent-flats'
+    }
+    if(bedr == 2){
+        url='/get-most-expensive-apart'
+    }
+ 
+  var xmlhttp = new XMLHttpRequest();
+
+xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == XMLHttpRequest.DONE) {  
+       if (xmlhttp.status == 200) {
+       
+        if(bedr == 0){
+        url = '/get-current-apart'
+        document.getElementById("table").innerHTML =  flatfreq(JSON.parse(xmlhttp.responseText));
+    }
+    if(bedr == 1){
+        url = '/get-frequent-flats';
+        document.getElementById("table").innerHTML =  createTableExpensive(JSON.parse(xmlhttp.responseText));
+      
+    }
+    if(bedr == 2){
+        url='/get-most-expensive-apart'
+        document.getElementById("table").innerHTML =  createTableExpensive(JSON.parse(xmlhttp.responseText));
+    }
+       }
+       else if (xmlhttp.status == 400) {
+          alert('There was an error 400');
+       }
+       else {
+           alert('something else other than 200 was returned');
+       }
+    }
+};
+
+xmlhttp.open("GET", url+"?userid="+1, true);
+xmlhttp.send();
+
+  }
+  find();
+    </script>
+</html>
